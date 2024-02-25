@@ -1,0 +1,17 @@
+{
+  "name": "image-generate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.44",
+    "micro": "^10.0.1",
+    "vercel": "^33.3.0"
+  }
+}
