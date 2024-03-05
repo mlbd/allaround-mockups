@@ -3,7 +3,7 @@ const { createCanvas, loadImage } = require("@napi-rs/canvas");
 const site = "http://mlimon.io/newmini";
 
 const mockupGeneratorAjax = {
-    image_save_endpoint: `${site}/wp-json/alaround-generate/v1/save-image`,
+    image_save_endpoint: `${site}/wp-json/alaround-generate/v1/save-mockup`,
     info_save_endpoint: `${site}/wp-json/alaround-generate/v1/save-info`
 };
 
@@ -15,6 +15,7 @@ const itemPushEachAtOnce = 20;
 let imageResultList = [];
 let isGeneratingImages = false; // Flag to track whether image generation is in progress
 const userQueue = []; // Queue to store users for processing
+const enableBackgroundColor = true;
 
 // Define a variable to control logging
 let enableLogging = true;
@@ -47,21 +48,21 @@ function convertLogos(logos) {
 
     for (let key in logos) {
         if (logos.hasOwnProperty(key)) {
-        // If the value is an array, iterate through its elements
-        if (Array.isArray(logos[key])) {
-            logos[key].forEach((item, index) => {
-            backgrounds.push({
-                product_id: parseInt(key),
-                meta_key: item['meta_key'],
-                meta_value: item['meta_value']
-            });
-            });
-        } else {
-            backgrounds.push({
-            id: key,
-            url: logos[key][0]
-            });
-        }
+            // If the value is an array, iterate through its elements
+            if (Array.isArray(logos[key])) {
+                logos[key].forEach((item, index) => {
+                    backgrounds.push({
+                        product_id: parseInt(key),
+                        meta_key: item['meta_key'],
+                        meta_value: item['meta_value']
+                    });
+                });
+            } else {
+                backgrounds.push({
+                    id: key,
+                    url: logos[key][0]
+                });
+            }
         }
     }
 
@@ -83,6 +84,28 @@ function convertGallery(images) {
     }
     
     return gallery;
+}
+
+// Function to calculate new dimensions while maintaining aspect ratio
+function calculateNewDimensions(originalWidth, originalHeight, maxWidth, maxHeight) {
+    const aspectRatio = originalWidth / originalHeight;
+    
+    // Check if resizing is needed
+    if (originalWidth > maxWidth || originalHeight > maxHeight) {
+        if (maxWidth / aspectRatio <= maxHeight) {
+        return { newWidth: maxWidth, newHeight: maxWidth / aspectRatio };
+        } else {
+        return { newWidth: maxHeight * aspectRatio, newHeight: maxHeight };
+        }
+    } else {
+        return { newWidth: originalWidth, newHeight: originalHeight };
+    }
+}
+
+
+    // Function to calculate new y position to keep the image centered
+function calculateCenteredY(originalY, originalHeight, newHeight) {
+    return originalY + (originalHeight - newHeight) / 2;
 }
 
 function aspect_height(originalWidth, originalHeight, newWidth) {
@@ -128,6 +151,8 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
     if( gallery && gallery !== false && gallery.length !== 0 ) {
         filename = product_id + '-' + gallery['id'] + '-' + gallery['attachment_id'] + '.' + file_ext;
     }
+
+    console.log('backgroundUrl', backgroundUrl);
 
     const backgroundImage = await loadImage(backgroundUrl);
 
@@ -244,54 +269,53 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
                 const originalWidth = logoImage.width;
                 const originalHeight = logoImage.height;
 
-                const newHeight = aspect_height(originalWidth, originalHeight, width);
-                const newY =  aspectY(newHeight, height, y);
+                customLog('enableBackgroundColor', enableBackgroundColor, typeof enableBackgroundColor);
+
+                if ( enableBackgroundColor !== false ) {
+                    // Draw the background with rotation
+                    ctx.save();
+                    ctx.translate(x + width / 2, y + height / 2);
+                    ctx.rotate(angle);
+                    ctx.fillStyle = "lightblue"; // Set background color, you can change this to any color
+                    ctx.fillRect(-width / 2, -height / 2, width, height);
+                    ctx.restore();
+
+                    customLog('added a logo background!');
+                }
+
+                // Calculate the new dimensions while maintaining the aspect ratio
+                let { newWidth, newHeight } = calculateNewDimensions(originalWidth, originalHeight, width, height);
+
+                // Calculate new y position to keep the image centered
+                let newY = calculateCenteredY(y, height, newHeight);
+
+                if (angle === 0) {
+                    customLog("width force to full");
+                    newHeight = aspect_height(originalWidth, originalHeight, width);
+                    newWidth = width;
+                    newY =  aspectY(newHeight, height, y);
+                }
 
                 ctx.save();
                 ctx.translate(x + width / 2, newY + newHeight / 2);
                 ctx.rotate(angle);
-                ctx.drawImage(logoImage, -width / 2, -newHeight / 2, width, newHeight);
+                ctx.drawImage(logoImage, -newWidth / 2, -newHeight / 2, newWidth, newHeight);
                 ctx.restore();
             }
 
             const dataURL = staticCanvas.toDataURL('image/png');
 
             // Call the function and wait for the result
-            // const result = await saveImageToServer(dataURL, filename, user_id, is_feature_image);
+            const result = {dataURL, filename, user_id, is_feature_image};
+            
 
-            // Add image data to the batch array
-            imageBatch.push({
-                dataURL,
-                filename,
-                user_id,
-                is_feature_image,
-            });
-
-            totalImagesProcessed++;
-
-            console.log("totalNumberItems", totalNumberItems);
-            console.log("getTotalItemNeedProcess", getTotalItemNeedProcess);
-
-            // If the batch size reaches itemPushEachAtOnce or it's the last iteration, send the batch to the server
-            if (
-                imageBatch.length === itemPushEachAtOnce || 
-                (totalImagesProcessed > 0 && totalImagesProcessed % itemPushEachAtOnce === 0) || 
-                totalNumberItems === getTotalItemNeedProcess
-            ) {
-                console.log("totalImagesProcessed", totalImagesProcessed);
-                const result = await saveImageBatchToServer(imageBatch);
-
-                // Clear the batch array after sending it to the server
-                imageBatch = [];
-
-                // Handle the result if needed
-                if (!result) {
-                    console.error('Image batch save operation failed');
-                    return false;
-                }
+             // Now you can check the result
+            if ( ! result ) {
+                console.error(`Image save operation failedm, filename: ${$filename}`);
+                return false;
             }
 
-            return filename;
+            return result;
         }
     }
 };
@@ -351,94 +375,33 @@ const loadSimpleImage = async (url) => {
 };
 
 
-
-let imageBatch = [];
-let totalImagesProcessed = 0;
-let totalNumberItems = 0;
-let getTotalItemNeedProcess = 0;
-
 // Function to perform the image generation
 const generateImages = async (task) => {
-    let { backgrounds, logo, logo_second, custom_logo, user_id, logoData, logo_type, custom_logo_type, logo_collections } = task;
-    const totalImages = backgrounds.length;
-    const imageResultList = [];
+    const { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries } = task;
 
-    console.log('logo_collections:', logo_collections);
+    // console.log(`backgroundUrl ${backgroundUrl} logo ${logo} logo_second ${logo_second} custom_logo ${custom_logo} user_id ${user_id} product_id ${product_id} logoData ${logoData} logo_type ${logo_type} custom_logo_type ${custom_logo_type}`);
 
-    for (let i = 0; i < totalImages; i++) {
-        totalNumberItems++;
-        const galleries = backgrounds[i]['galleries'];
+    const promises = [];
 
-        // If there are galleries, generate images for each gallery
-        if (galleries && galleries.length !== 0) {
-            totalNumberItems += galleries.length;
-        }
+    promises.push(generateImageWithLogos(backgroundUrl, user_id, product_id, logo, logo_second, custom_logo, logoData, logo_type, custom_logo_type));
+
+    if (galleries && galleries.length !== 0) {
+        const galleriesConvert = convertGallery(galleries);
+
+        galleriesConvert.forEach((item, index) => {
+            const galleryUrl = item['url'];
+            const galleryItem = item;
+            promises.push(generateImageWithLogos(galleryUrl, user_id, product_id, logo, logo_second, custom_logo, logoData, logo_type, custom_logo_type, galleryItem));
+        });
     }
 
-    console.log('finished totalNumberItems:', totalNumberItems);
-
-    for (let i = 0; i < totalImages; i++) {
-        getTotalItemNeedProcess++;
-        const backgroundUrl = backgrounds[i]['url'];
-        const product_id = backgrounds[i]['id'];
-        const galleries = backgrounds[i]['galleries'];
-
-        let storeLogo = logo;
-        let storeLogoTpe = logo_type;
-        let storeLogoSecond = logo_second;
-
-        // first check if logo collection even exists or not
-        if( logo_collections !== null && logo_collections.collections !== null ) {
-            const itemData = await getLightnessByID(logo_collections.collections, product_id);
-
-            const { override_logo } = logo_collections;
-
-            // check if itemData is not null
-            // although it's check first so it's just extra layour of security
-            if (itemData !== null) {
-
-                console.log("itemData::::::::::", itemData);
-                console.log("product_id::::::::::", product_id);
-                console.log("logo_collections::::::::::", logo_collections.collections);
-
-                storeLogo = await getLighter( itemData, logo );
-                storeLogoSecond = await getDarker( itemData, custom_logo );
-
-                if( logo && logo !== null && ( override_logo === '' || override_logo === false) ) {
-                    const logoImage = await loadSimpleImage(logo);
-                    let get_type = get_orientation(logoImage);
-                    console.log(`override_logo: ${override_logo} newtype: ${get_type}`);
-                    storeLogoTpe = get_type;
-                }
-
-                console.log(`user_id ${user_id} logo ${logo} logo_second ${logo_second} logo_type ${logo_type}`);
-            }
-        }
-
-        // Generate image for the main product
-        const mainImageResult = await generateImageWithLogos(backgroundUrl, user_id, product_id, storeLogo, storeLogoSecond, custom_logo, logoData, storeLogoTpe, custom_logo_type);
-        imageResultList.push(mainImageResult);
-
-        // If there are galleries, generate images for each gallery
-        if (galleries && galleries.length !== 0) {
-            const galleriesConvert = convertGallery(galleries);
-            
-            for (const item of galleriesConvert) {
-                const galleryUrl = item['url'];
-                const galleryItem = item;
-                getTotalItemNeedProcess++;
-                
-                // Generate image for the gallery
-                const galleryImageResult = await generateImageWithLogos(galleryUrl, user_id, product_id, logo, logo_second, custom_logo, logoData, logo_type, custom_logo_type, galleryItem);
-                imageResultList.push(galleryImageResult);
-            }
-        }
-    }
+    // Wait for all promises to resolve and capture the results
+    imageResultList = await Promise.all(promises);
 
     // Filter out the false values (failed image generation)
-    const filteredResultList = imageResultList.filter(result => result !== false);
+    imageResultList = imageResultList.filter(result => result !== false);
 
-    return filteredResultList; // Return the result list if needed elsewhere
+    return imageResultList; // Return the result list if needed elsewhere
 };
 
 /**
@@ -484,10 +447,13 @@ async function getDarker( data, logo ) {
 
 // Function to send the dataURL to the server
 async function saveImageToServer(dataURL, filename, user_id, is_feature_image) {
+    console.log(mockupGeneratorAjax.image_save_endpoint);
+    const bodyargs = { imageData: dataURL, filename, user_id, is_feature_image };
+    // console.log(bodyargs);
     try {
         const response = await fetch(mockupGeneratorAjax.image_save_endpoint, {
             method: 'POST',
-            body: JSON.stringify({ imageData: dataURL, filename, user_id, is_feature_image }),
+            body: JSON.stringify( bodyargs ),
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -560,74 +526,6 @@ async function saveImageBatchToServer(batch) {
     }
 }
 
-const processUserQueue = async () => {
-    while (userQueue.length > 0) {
-        console.log( "userQueue start: " + new Date() );
-        const user = userQueue.shift(); // Dequeue the first user from the queue
-        console.log(user);
-        const { backgrounds, logo, logo_second, user_id, logoData, logo_type, custom_logo_type, logo_collections } = user;
-
-        const start_time = Math.floor(Date.now() / 1000);
-
-        try {
-            imageBatch = [];
-            totalImagesProcessed = 0;
-            totalNumberItems = 0;
-            getTotalItemNeedProcess = 0;
-            isGeneratingImages = true; // Set the flag to indicate image generation is in progress
-            const result = await generateImages({ backgrounds, logo, logo_second, user_id, logoData, logo_type, custom_logo_type, logo_collections });
-
-            // Do something with the result if needed
-            if(result) {
-                let btnItem = $('#ml_mockup_gen-'+user_id);
-                let checkboxItem = $('input.customer[value="'+user_id+'"]');
-                if( btnItem.length !== 0 ) {
-                    btnItem.removeClass('ml_loading').prop("disabled", false);
-                }
-                if( checkboxItem.length !== 0 ) {
-                    checkboxItem.prop("checked", false);
-                }
-            }
-            
-            const info = {
-                "user_id": user_id,
-                "start_time": start_time,
-                "end_time": Math.floor(Date.now() / 1000),
-                "total_items": result.length
-            }
-            
-            // Call the function to print the result after all images are generated
-            printImageResultList(info);
-        } catch (error) {
-            console.error('Error generating images for user:', user, error);
-        } finally {
-            isGeneratingImages = false; // Reset the flag once image generation is complete
-        }
-    }
-
-    // Print a message if the queue is empty after processing
-    if (userQueue.length === 0) {
-        customLog('All users in the queue have been processed.');
-        alert("Generation Done!");
-        // refresh the page
-        location.reload();
-    }
-};
-
-
-// Assuming you have a function to get user data based on user ID
-const getUserDataById = (userId) => {
-
-    let btnItem = $('#ml_mockup_gen-'+userId);
-    if( btnItem.length !== 0 ) {
-        const task = getItemData(btnItem);
-        return task;
-    }
-
-    return false;
-};
-
-
 function isValidUrl(url) {
     try {
         new URL(url);
@@ -642,8 +540,6 @@ function getItemData(settings) {
         return false;
 
     if (
-        !settings.images ||
-        settings.images.length === 0 ||
         !settings.logo ||
         !settings.user_id
     ) {
@@ -651,11 +547,10 @@ function getItemData(settings) {
         return false;
     }
 
-    const backgrounds = convertBackgrounds(settings.images);
-    if(!backgrounds) {
+    const backgroundUrl = settings.backgroundUrl;
+    if(!backgroundUrl) {
         return false;
     }
-
 
     let logoData = '';
     if (settings.logo_positions && settings.logo_positions.length !== 0) {
@@ -668,8 +563,9 @@ function getItemData(settings) {
     const user_id = settings.user_id;
     let logo_second = settings.logo_second;
     let custom_logo = settings.custom_logo_data;
-    let logo_collections = settings.logo_collections;
+    let product_id = settings.product_id;
     let custom_logo_type = settings.custom_logo_type;
+    let galleries = settings.galleries;
     // let custom_logo = undefined;
 
     if (logo_second && !isValidUrl(logo_second)) {
@@ -677,22 +573,12 @@ function getItemData(settings) {
         logo_second = undefined; // or set to a default value
     }
 
-    const task = { backgrounds, logo, logo_second, custom_logo, user_id, logoData, logo_type, custom_logo_type, logo_collections };
+    const task = { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries };
 
     // console.log(task);
 
     return task;
 }
-
-
-// Print the result after all images are generated
-function printImageResultList(info) {
-    const { user_id, start_time, end_time, total_items } = info;
-    saveInfo( user_id, start_time, end_time, total_items );
-    customLog('imageResultList', imageResultList);
-    console.log( "finished: " + new Date() );
-}
-
 
 module.exports = async (req, res) => {
     console.log(req.query);
@@ -700,27 +586,15 @@ module.exports = async (req, res) => {
     if (req.method === 'POST' && req.url === '/api/create') {
 
         try {
-
             const task = getItemData(req.body);
-
-            console.log(task);
-
-            // Set the flag to indicate image generation is in progress
-            isGeneratingImages = true;
-
-            imageBatch = [];
-            totalImagesProcessed = 0;
-            totalNumberItems = 0;
-            getTotalItemNeedProcess = 0;
 
             console.log( "start: " + new Date() );
 
             // Perform image generation
-            imageResultList = await generateImages(task);
-
+            const batch = await generateImages(task);
 
             res.status(200).json({ 
-                task: task
+                batch
             });
    
         } catch (error) {
