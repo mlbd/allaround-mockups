@@ -293,7 +293,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
                     customLog("width force to full");
                     newHeight = aspect_height(originalWidth, originalHeight, width);
                     newWidth = width;
-                    newY =  aspectY(newHeight, height, y);
+                    newY =  calculateCenteredY(y, height, newHeight);
                 }
 
                 ctx.save();
