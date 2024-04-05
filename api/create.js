@@ -152,7 +152,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
         filename = product_id + '-' + gallery['id'] + '-' + gallery['attachment_id'] + '.' + file_ext;
     }
 
-    console.log('backgroundUrl', backgroundUrl);
+    // console.log('backgroundUrl', backgroundUrl);
 
     const backgroundImage = await loadImage(backgroundUrl);
 
@@ -185,7 +185,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
         let logoNumber = resultItem.meta_value['logoNumber'];
             logoNumber = logoNumber !== undefined ? logoNumber : 'default';
         
-        console.log("logo_type", logo_type, finalItem);
+        // console.log("logo_type", logo_type, finalItem);
 
         // check if select second logo or not
         // check if second logo value exists or not
@@ -197,17 +197,29 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
             finalLogoNumber = 'darker';
         }
 
+        if( 578 === product_id ) {
+            console.log('gallery', gallery);
+        }
+
         if( gallery && gallery !== false && gallery.length !== 0 ) {
             
-            if( gallery['type'] == 'light' ) {
+            if( gallery['type'] === 'lighter' ) {
                 finalLogo = logo;
                 finalLogoNumber = 'lighter';
             }
-            if( gallery['type'] == 'dark' && (logo_second && logo_second != null && logo_second != undefined) ) {
+            if( gallery['type'] === 'darker' && (logo_second && logo_second != null && logo_second != undefined) ) {
                 finalLogo = logo_second;
                 finalLogoNumber = 'darker';
             }
+
+            if( 578 === product_id ) {
+                console.log('finalLogo', finalLogo);
+                console.log('finalLogoNumber', finalLogoNumber);
+                console.log('logo_second', logo_second);
+            }
         }
+
+        
 
         if (finalItem !== undefined && finalItem !== false) {
 
@@ -237,7 +249,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
                 // then get that type value from resultItem
                 // and re-initialize x, y, width, height, angle again with new values.
                 if( custom === true ) {
-                    console.log(`custom ${custom} custom_logo ${custom_logo}`);
+                    // console.log(`custom ${custom} custom_logo ${custom_logo}`);
                     let get_type = get_orientation(logoImage);
                     if (custom_logo_type && (custom_logo_type === "horizontal" || custom_logo_type === "square")) {
                         // console.log(`ProductID:${product_id} Type:${custom_logo_type}`);
@@ -256,7 +268,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
 
                     let get_type_values = resultItem.meta_value[get_type];
                     
-                    console.log("get_type", get_type, get_type_values);
+                    // console.log("get_type", get_type, get_type_values);
                     if( get_type_values[index] && get_type_values[index] != null && get_type_values[index] != undefined ) {
 
                         // console.log(`--- get_type:${get_type} is_feature:${is_feature_image} id:${product_id} user:${user_id} index:${index}`, get_type_values);
@@ -379,7 +391,7 @@ const loadSimpleImage = async (url) => {
 const generateImages = async (task) => {
     const { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries } = task;
 
-    // console.log(`backgroundUrl ${backgroundUrl} logo ${logo} logo_second ${logo_second} custom_logo ${custom_logo} user_id ${user_id} product_id ${product_id} logoData ${logoData} logo_type ${logo_type} custom_logo_type ${custom_logo_type}`);
+    console.log(`backgroundUrl ${backgroundUrl} logo ${logo} logo_second ${logo_second} custom_logo ${custom_logo} user_id ${user_id} product_id ${product_id} logoData ${logoData} logo_type ${logo_type} custom_logo_type ${custom_logo_type}`);
 
     const promises = [];
 
@@ -389,8 +401,16 @@ const generateImages = async (task) => {
         const galleriesConvert = convertGallery(galleries);
 
         galleriesConvert.forEach((item, index) => {
+            
             const galleryUrl = item['url'];
-            const galleryItem = item;
+            const galleryType = item['type'];
+            let galleryItem = item;
+
+            // make lowercase galleryType
+            if (galleryItem['type']) {
+                galleryItem['type'] = galleryItem['type'].toLowerCase();
+            }
+
             promises.push(generateImageWithLogos(galleryUrl, user_id, product_id, logo, logo_second, custom_logo, logoData, logo_type, custom_logo_type, galleryItem));
         });
     }
@@ -445,87 +465,6 @@ async function getDarker( data, logo ) {
 }
 
 
-// Function to send the dataURL to the server
-async function saveImageToServer(dataURL, filename, user_id, is_feature_image) {
-    console.log(mockupGeneratorAjax.image_save_endpoint);
-    const bodyargs = { imageData: dataURL, filename, user_id, is_feature_image };
-    // console.log(bodyargs);
-    try {
-        const response = await fetch(mockupGeneratorAjax.image_save_endpoint, {
-            method: 'POST',
-            body: JSON.stringify( bodyargs ),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            // Image was successfully saved on the server
-            customLog('Image saved on the server');
-            return true; // or you can return some other value indicating success
-        } else {
-            // Handle the error if the save operation fails
-            console.error('Failed to save image on the server');
-            return false; // or you can return some other value indicating failure
-        }
-    } catch (error) {
-        console.error('Error sending data to the server:', error);
-        return false; // or you can return some other value indicating failure
-    }
-}
-
-async function saveInfo(user_id, start_time, end_time, total_items) {
-    console.log("saveInfo", user_id, start_time, end_time, total_items);
-    try {
-        const response = await fetch(mockupGeneratorAjax.info_save_endpoint, {
-            method: 'POST',
-            body: JSON.stringify({ user_id, start_time, end_time, total_items }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            // Image was successfully saved on the server
-            customLog('Image saved on the server');
-            return true; // or you can return some other value indicating success
-        } else {
-            // Handle the error if the save operation fails
-            console.error('Failed to save image on the server');
-            return false; // or you can return some other value indicating failure
-        }
-    } catch (error) {
-        console.error('Error sending data to the server:', error);
-        return false; // or you can return some other value indicating failure
-    }
-}
-
-async function saveImageBatchToServer(batch) {
-    try {
-        console.log('batch', batch);
-        const response = await fetch(mockupGeneratorAjax.image_save_endpoint, {
-            method: 'POST',
-            body: JSON.stringify({ batch }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            // Image batch was successfully saved on the server
-            customLog('Image batch saved on the server');
-            return true; // or you can return some other value indicating success
-        } else {
-            // Handle the error if the save operation fails
-            console.error('Failed to save image batch on the server');
-            return false; // or you can return some other value indicating failure
-        }
-    } catch (error) {
-        console.error('Error sending data to the server:', error);
-        return false; // or you can return some other value indicating failure
-    }
-}
-
 function isValidUrl(url) {
     try {
         new URL(url);
@@ -561,7 +500,7 @@ function getItemData(settings) {
 
     const logo = settings.logo;
     const user_id = settings.user_id;
-    let logo_second = settings.logo_second;
+    let logo_second = settings.second_logo;
     let custom_logo = settings.custom_logo_data;
     let product_id = settings.product_id;
     let custom_logo_type = settings.custom_logo_type;
@@ -581,7 +520,7 @@ function getItemData(settings) {
 }
 
 module.exports = async (req, res) => {
-    console.log(req.query);
+    // console.log(req.query);
 
     if (req.method === 'POST' && req.url === '/api/create') {
 
