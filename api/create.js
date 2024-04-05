@@ -15,7 +15,7 @@ const itemPushEachAtOnce = 20;
 let imageResultList = [];
 let isGeneratingImages = false; // Flag to track whether image generation is in progress
 const userQueue = []; // Queue to store users for processing
-const enableBackgroundColor = true;
+const enableBackgroundColor = false;
 
 // Define a variable to control logging
 let enableLogging = true;
