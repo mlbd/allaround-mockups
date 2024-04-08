@@ -1,6 +1,6 @@
 const { createCanvas, loadImage } = require("@napi-rs/canvas");
 
-const site = "http://mlimon.io/newmini";
+const site = "https://min.lukpaluk.xyz";
 
 const mockupGeneratorAjax = {
     image_save_endpoint: `${site}/wp-json/alaround-generate/v1/save-mockup`,
