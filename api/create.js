@@ -156,7 +156,13 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
 
     const backgroundImage = await loadImage(backgroundUrl);
 
-    const staticCanvas = createCanvas(backgroundImage.width, backgroundImage.height);
+    // const staticCanvas = createCanvas(backgroundImage.width, backgroundImage.height);
+    // const ctx = staticCanvas.getContext('2d');
+
+    // Reduce canvas size by resizing
+    const scaledWidth = 500; // Example width
+    const scaledHeight = backgroundImage.height * (scaledWidth / backgroundImage.width);
+    const staticCanvas = createCanvas(scaledWidth, scaledHeight);
     const ctx = staticCanvas.getContext('2d');
 
     // Draw the background image
