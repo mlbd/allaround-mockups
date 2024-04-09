@@ -315,7 +315,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
                 ctx.restore();
             }
 
-            const dataURL = staticCanvas.toDataURL('image/jpeg', 0.7);
+            const dataURL = staticCanvas.toDataURL('image/png');
 
             // Convert the length of the data URL from bytes to megabytes
             const sizeInMB = Math.round((dataURL.length * 3 / 4) / (1024 * 1024) * 100) / 100;
