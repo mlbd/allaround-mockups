@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@napi-rs/canvas": "^0.1.44",
+    "canvas-compress": "^1.1.5",
     "micro": "^10.0.1",
     "vercel": "^33.3.0"
   }

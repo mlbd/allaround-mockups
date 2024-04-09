@@ -156,17 +156,11 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
 
     const backgroundImage = await loadImage(backgroundUrl);
 
-    // const staticCanvas = createCanvas(backgroundImage.width, backgroundImage.height);
-    // const ctx = staticCanvas.getContext('2d');
-
-    // Reduce canvas size by resizing
-    const scaledWidth = 500; // Example width
-    const scaledHeight = backgroundImage.height * (scaledWidth / backgroundImage.width);
-    const staticCanvas = createCanvas(scaledWidth, scaledHeight);
+    const staticCanvas = createCanvas(backgroundImage.width, backgroundImage.height);
     const ctx = staticCanvas.getContext('2d');
 
     // Draw the background image
-    ctx.drawImage(backgroundImage, 0, 0, scaledWidth, scaledHeight);
+    ctx.drawImage(backgroundImage, 0, 0);
 
     // Use Array.filter() to get items with the matching product_id
     const itemsWithMatchingProductID = logoData.filter(item => item.product_id == product_id);
@@ -322,6 +316,16 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
             }
 
             const dataURL = staticCanvas.toDataURL('image/png');
+
+            const scaledWidth = 1000; // Example width
+            const scaledHeight = backgroundImage.height * (scaledWidth / backgroundImage.width);
+
+            // Compress the dataURL using canvas-compress
+            const compressedDataURL = await CanvasCompress.compress(dataURL, {
+                quality: 0.8, // Adjust the quality as needed
+                maxWidth: scaledWidth, // Example maximum width
+                maxHeight: scaledHeight, // Example maximum height
+            });
 
             // Call the function and wait for the result
             const result = {dataURL, filename, user_id, is_feature_image};
