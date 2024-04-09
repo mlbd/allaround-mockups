@@ -1,4 +1,5 @@
 const { createCanvas, loadImage } = require("@napi-rs/canvas");
+const CanvasCompress = require('canvas-compress');
 
 const site = "http://mlimon.io/newmini";
 
