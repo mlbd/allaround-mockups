@@ -315,7 +315,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
                 ctx.restore();
             }
 
-            const dataURL = staticCanvas.toDataURL('image/png');
+            const dataURL = staticCanvas.toDataURL('image/jpeg', 0.7);
 
             // Call the function and wait for the result
             const result = {dataURL, filename, user_id, is_feature_image};
