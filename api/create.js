@@ -166,7 +166,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
     const ctx = staticCanvas.getContext('2d');
 
     // Draw the background image
-    ctx.drawImage(backgroundImage, 0, 0);
+    ctx.drawImage(backgroundImage, 0, 0, scaledWidth, scaledHeight);
 
     // Use Array.filter() to get items with the matching product_id
     const itemsWithMatchingProductID = logoData.filter(item => item.product_id == product_id);
