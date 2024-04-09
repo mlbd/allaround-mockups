@@ -358,7 +358,7 @@ const loadLogoImage = async (imgData) => {
     const { url, product_id, user_id, is_feature, custom, custom_logo, finalLogoNumber, logoNumber } = imgData;
 
     let fetchUrl = url;
-    if( undefined != custom && true === custom && custom_logo != null) {
+    if( true === custom && custom_logo != null) {
         if (
             custom_logo.hasOwnProperty("allow_products") && 
             Array.isArray(custom_logo.allow_products) && 
