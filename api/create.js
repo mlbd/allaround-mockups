@@ -18,7 +18,7 @@ const userQueue = []; // Queue to store users for processing
 const enableBackgroundColor = false;
 
 // Define a variable to control logging
-let enableLogging = true;
+let enableLogging = false;
 
 // Custom logging function
 const customLog = (...args) => {
@@ -249,7 +249,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
                 // then get that type value from resultItem
                 // and re-initialize x, y, width, height, angle again with new values.
                 if( custom === true ) {
-                    // console.log(`custom ${custom} custom_logo ${custom_logo}`);
+                    console.log(`custom ${custom} custom_logo ${custom_logo} user_id ${user_id} product: ${product_id}`);
                     let get_type = get_orientation(logoImage);
                     if (custom_logo_type && (custom_logo_type === "horizontal" || custom_logo_type === "square")) {
                         // console.log(`ProductID:${product_id} Type:${custom_logo_type}`);
