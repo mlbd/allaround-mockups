@@ -317,14 +317,21 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
 
             const dataURL = staticCanvas.toDataURL('image/png');
 
-            // Convert the length of the data URL from bytes to megabytes
-            const sizeInMB = Math.round((dataURL.length * 3 / 4) / (1024 * 1024) * 100) / 100;
-
-            // Log the size of the data URL in MB
-            console.log('Data URL size:', sizeInMB, 'MB');
-
             // Call the function and wait for the result
             const result = {dataURL, filename, user_id, is_feature_image};
+
+            // Convert response data to JSON string
+            const responseDataString = JSON.stringify(result);
+
+            // Calculate the size of the response data in bytes
+            const responseSizeInBytes = Buffer.byteLength(responseDataString, 'utf8');
+
+            // Calculate the size of the response data in megabytes
+            const responseSizeInMB = responseSizeInBytes / (1024 * 1024);
+
+            // Log the response size in both bytes and megabytes
+            console.log('Response size:', responseSizeInBytes, 'bytes');
+            console.log('Response size:', responseSizeInMB.toFixed(2), 'MB');
             
 
              // Now you can check the result
