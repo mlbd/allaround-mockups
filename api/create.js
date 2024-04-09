@@ -1,5 +1,4 @@
 const { createCanvas, loadImage } = require("@napi-rs/canvas");
-const CanvasCompress = require('canvas-compress');
 
 const site = "http://mlimon.io/newmini";
 
@@ -317,16 +316,6 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
             }
 
             const dataURL = staticCanvas.toDataURL('image/png');
-
-            const scaledWidth = 1000; // Example width
-            const scaledHeight = backgroundImage.height * (scaledWidth / backgroundImage.width);
-
-            // Compress the dataURL using canvas-compress
-            const compressedDataURL = await CanvasCompress.compress(dataURL, {
-                quality: 0.8, // Adjust the quality as needed
-                maxWidth: scaledWidth, // Example maximum width
-                maxHeight: scaledHeight, // Example maximum height
-            });
 
             // Call the function and wait for the result
             const result = {dataURL, filename, user_id, is_feature_image};
