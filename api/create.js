@@ -514,7 +514,7 @@ function getItemData(settings) {
     const logo = settings.logo;
     const user_id = settings.user_id;
     let logo_second = settings.second_logo;
-    let custom_logo = settings.custom_logo_data;
+    let custom_logo = settings.custom_logo;
     let product_id = settings.product_id;
     let custom_logo_type = settings.custom_logo_type;
     let galleries = settings.galleries;
