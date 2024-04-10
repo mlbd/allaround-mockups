@@ -404,7 +404,7 @@ const loadLogoImage = async (imgData) => {
         if (
             custom_logo.hasOwnProperty("allow_products") && 
             Array.isArray(custom_logo.allow_products) && 
-            custom_logo.allow_products.includes(product_id)
+            checkProductExists(product_id, custom_logo)
         ) {
             console.log( "-------------- second layer loadlogoimage" );
             if (
