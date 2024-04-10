@@ -375,6 +375,15 @@ const loadLogoImage = async (imgData) => {
     if( true === custom && custom_logo != null) {
         console.log( `-------------- first layer loadlogoimage product_id ${product_id}` );
         console.log( custom_logo );
+        if( custom_logo.hasOwnProperty("allow_products") ) {
+            console.log("hasownproperty check and it work!");
+        }
+        if( Array.isArray(custom_logo.allow_products) ) {
+            console.log("isarray check and it work!");
+        }
+        if( custom_logo.allow_products.includes(product_id) ) {
+            console.log("includes check and it work!");
+        }
         if (
             custom_logo.hasOwnProperty("allow_products") && 
             Array.isArray(custom_logo.allow_products) && 
