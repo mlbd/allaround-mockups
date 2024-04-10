@@ -369,19 +369,22 @@ function get_orientation(attachment_metadata) {
 // Function to load a logo image
 const loadLogoImage = async (imgData) => {
     const { url, product_id, user_id, is_feature, custom, custom_logo, finalLogoNumber, logoNumber } = imgData;
-
+    console.log( "-------------- inside loadlogoimage" );
     let fetchUrl = url;
     if( true === custom && custom_logo != null) {
+        console.log( "-------------- first layer loadlogoimage" );
         if (
             custom_logo.hasOwnProperty("allow_products") && 
             Array.isArray(custom_logo.allow_products) && 
             custom_logo.allow_products.includes(product_id)
         ) {
+            console.log( "-------------- second layer loadlogoimage" );
             if (
                 custom_logo.hasOwnProperty(finalLogoNumber) && 
                 custom_logo[finalLogoNumber] && 
                 custom_logo.finalLogoNumber !== ""
             ) {
+                console.log( "-------------- final layer loadlogoimage" );
                 fetchUrl = custom_logo[finalLogoNumber];
             }
         }
