@@ -370,6 +370,16 @@ function findInArray(needle, array) {
     return array.find(element => element === needle) !== undefined;
 }
 
+// Function to check if product exists in the allow_products array
+function checkProductExists(product_id, custom_logo) {
+    for (let i = 0; i < custom_logo.allow_products.length; i++) {
+      if (custom_logo.allow_products[i] === product_id) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
 // Function to load a logo image
 const loadLogoImage = async (imgData) => {
@@ -387,6 +397,9 @@ const loadLogoImage = async (imgData) => {
         }
         if( findInArray(product_id, custom_logo.allow_products) ) {
             console.log("findInArray check and it work!");
+        }
+        if( checkProductExists(product_id, custom_logo) ) {
+            console.log("checkProductExists check and it work!");
         }
         if (
             custom_logo.hasOwnProperty("allow_products") && 
