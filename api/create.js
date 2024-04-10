@@ -366,6 +366,10 @@ function get_orientation(attachment_metadata) {
     return 'square';
 }
 
+function findInArray(needle, array) {
+    return array.find(element => element === needle) !== undefined;
+}
+
 
 // Function to load a logo image
 const loadLogoImage = async (imgData) => {
@@ -381,8 +385,8 @@ const loadLogoImage = async (imgData) => {
         if( Array.isArray(custom_logo.allow_products) ) {
             console.log("isarray check and it work!");
         }
-        if( custom_logo.allow_products.includes(product_id) ) {
-            console.log("includes check and it work!");
+        if( findInArray(product_id, custom_logo.allow_products) ) {
+            console.log("findInArray check and it work!");
         }
         if (
             custom_logo.hasOwnProperty("allow_products") && 
