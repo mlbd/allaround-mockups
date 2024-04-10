@@ -391,19 +391,6 @@ const loadLogoImage = async (imgData) => {
     let fetchUrl = url;
     if( true === custom && custom_logo != null) {
         console.log( `-------------- first layer loadlogoimage product_id ${product_id}` );
-        console.log( custom_logo );
-        if( custom_logo.hasOwnProperty("allow_products") ) {
-            console.log("hasownproperty check and it work!");
-        }
-        if( Array.isArray(custom_logo.allow_products) ) {
-            console.log("isarray check and it work!");
-        }
-        if( findInArray(product_id, custom_logo.allow_products) ) {
-            console.log("findInArray check and it work!");
-        }
-        if( checkProductExists(product_id, custom_logo) ) {
-            console.log("checkProductExists check and it work!");
-        }
         if (
             custom_logo.hasOwnProperty("allow_products") && 
             Array.isArray(custom_logo.allow_products) && 
