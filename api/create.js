@@ -373,7 +373,8 @@ const loadLogoImage = async (imgData) => {
     console.log( "-------------- inside loadlogoimage" );
     let fetchUrl = url;
     if( true === custom && custom_logo != null) {
-        console.log( "-------------- first layer loadlogoimage" );
+        console.log( `-------------- first layer loadlogoimage product_id ${product_id}` );
+        console.log( custom_logo );
         if (
             custom_logo.hasOwnProperty("allow_products") && 
             Array.isArray(custom_logo.allow_products) && 
