@@ -75,7 +75,7 @@ function convertGallery(images) {
     for (let key in images) {
         if (images.hasOwnProperty(key)) {
         gallery.push({
-            id: images[key]['item_key'] === undefined ? key : images[key]['item_key'],
+            id: key,
             attachment_id: images[key]['attachment_id'],
             url: images[key]['thumbnail'],
             type: images[key]['type']
@@ -250,7 +250,7 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
                 // and re-initialize x, y, width, height, angle again with new values.
                 if( custom === true ) {
                     // console.log( imgData );
-                    // console.log(`----------- custom ${custom} custom_logo ${custom_logo} user_id ${user_id} product: ${product_id}`);
+                    console.log(`----------- custom ${custom} custom_logo ${custom_logo} user_id ${user_id} product: ${product_id}`);
                     let get_type = get_orientation(logoImage);
                     if (custom_logo_type && (custom_logo_type === "horizontal" || custom_logo_type === "square")) {
                         // console.log(`ProductID:${product_id} Type:${custom_logo_type}`);
@@ -329,14 +329,10 @@ const generateImageWithLogos = async (backgroundUrl, user_id, product_id, logo, 
 
             // Calculate the size of the response data in megabytes
             const responseSizeInMB = responseSizeInBytes / (1024 * 1024);
-            const sizeInMb = responseSizeInMB.toFixed(5) + ' MB';
 
             // Log the response size in both bytes and megabytes
             console.log('Response size:', responseSizeInBytes, 'bytes');
-            console.log('Response size:', sizeInMb);
-
-            // Add sizeInMb to the result object
-            result.sizeInBytes = responseSizeInBytes;
+            console.log('Response size:', responseSizeInMB.toFixed(2), 'MB');
             
 
              // Now you can check the result
@@ -391,22 +387,22 @@ function checkProductExists(product_id, custom_logo) {
 // Function to load a logo image
 const loadLogoImage = async (imgData) => {
     const { url, product_id, user_id, is_feature, custom, custom_logo, finalLogoNumber, logoNumber } = imgData;
-    // console.log( "-------------- inside loadlogoimage" );
+    console.log( "-------------- inside loadlogoimage" );
     let fetchUrl = url;
     if( true === custom && custom_logo != null) {
-        // console.log( `-------------- first layer loadlogoimage product_id ${product_id}` );
+        console.log( `-------------- first layer loadlogoimage product_id ${product_id}` );
         if (
             custom_logo.hasOwnProperty("allow_products") && 
             Array.isArray(custom_logo.allow_products) && 
             checkProductExists(product_id, custom_logo)
         ) {
-            // console.log( "-------------- second layer loadlogoimage" );
+            console.log( "-------------- second layer loadlogoimage" );
             if (
                 custom_logo.hasOwnProperty(finalLogoNumber) && 
                 custom_logo[finalLogoNumber] && 
                 custom_logo.finalLogoNumber !== ""
             ) {
-                // console.log( "-------------- final layer loadlogoimage" );
+                console.log( "-------------- final layer loadlogoimage" );
                 fetchUrl = custom_logo[finalLogoNumber];
             }
         }
@@ -427,16 +423,13 @@ const loadSimpleImage = async (url) => {
 
 // Function to perform the image generation
 const generateImages = async (task) => {
-    const { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries, is_first } = task;
+    const { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries } = task;
 
     console.log(`backgroundUrl ${backgroundUrl} logo ${logo} logo_second ${logo_second} custom_logo ${custom_logo} user_id ${user_id} product_id ${product_id} logoData ${logoData} logo_type ${logo_type} custom_logo_type ${custom_logo_type}`);
 
     const promises = [];
 
-    console.log('----------------------------->>>>>>>', is_first);
-    if( true == is_first ) {
-        promises.push(generateImageWithLogos(backgroundUrl, user_id, product_id, logo, logo_second, custom_logo, logoData, logo_type, custom_logo_type));
-    }
+    promises.push(generateImageWithLogos(backgroundUrl, user_id, product_id, logo, logo_second, custom_logo, logoData, logo_type, custom_logo_type));
 
     if (galleries && galleries.length !== 0) {
         const galleriesConvert = convertGallery(galleries);
@@ -546,7 +539,6 @@ function getItemData(settings) {
     let product_id = settings.product_id;
     let custom_logo_type = settings.custom_logo_type;
     let galleries = settings.galleries;
-    let is_first = settings?.is_first;
     // let custom_logo = undefined;
 
     if (logo_second && !isValidUrl(logo_second)) {
@@ -554,50 +546,11 @@ function getItemData(settings) {
         logo_second = undefined; // or set to a default value
     }
 
-    const task = { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries, is_first };
+    const task = { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries };
 
     // console.log(task);
 
     return task;
-}
-
-/**
- * Splits the given task into two object if the total size of the task exceeds 3MB.
- *
- * @param {Array} task - The task to be split into smaller data chunks.
- * @return {Object} - An object containing the split data chunks.
- */
-function splitData(task) {
-    const returnData = [];
-    let sendData = [];
-    let dataSize = 0;
-
-    for (let i = 0; i < task.length; i++) {
-        const item = task[i];
-
-        // Check if adding the next item would exceed the 3MB limit
-        if (dataSize + item.sizeInBytes > 3 * 1024 * 1024) {
-            // If yes, create a returnData object with the accumulated data
-            returnData.push(...sendData);
-
-            // Start a new sendData array with the current item
-            sendData = [item];
-            
-            // Reset dataSize to the size of the current item
-            dataSize = item.sizeInBytes;
-            } else {
-            // If adding the next item doesn't exceed the limit, add it to sendData
-            sendData.push(item);
-            
-            // Increment dataSize
-            dataSize += item.sizeInBytes;
-        }
-    }
-
-    // Add any remaining data to returnData
-    returnData.push(...sendData);
-
-    return { returnData, sendData };
 }
 
 module.exports = async (req, res) => {
@@ -612,8 +565,6 @@ module.exports = async (req, res) => {
 
             // Perform image generation
             const batch = await generateImages(task);
-            // console.log('-----------------------');
-            // console.log(batch);
 
             res.status(200).json({ 
                 batch
