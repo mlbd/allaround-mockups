@@ -75,7 +75,7 @@ function convertGallery(images) {
     for (let key in images) {
         if (images.hasOwnProperty(key)) {
         gallery.push({
-            id: images[key]['item_key'],
+            id: key,
             attachment_id: images[key]['attachment_id'],
             url: images[key]['thumbnail'],
             type: images[key]['type']
@@ -427,16 +427,13 @@ const loadSimpleImage = async (url) => {
 
 // Function to perform the image generation
 const generateImages = async (task) => {
-    const { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries, is_first } = task;
+    const { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries } = task;
 
     console.log(`backgroundUrl ${backgroundUrl} logo ${logo} logo_second ${logo_second} custom_logo ${custom_logo} user_id ${user_id} product_id ${product_id} logoData ${logoData} logo_type ${logo_type} custom_logo_type ${custom_logo_type}`);
 
     const promises = [];
 
-    console.log('----------------------------->>>>>>>', is_first);
-    if( true == is_first ) {
-        promises.push(generateImageWithLogos(backgroundUrl, user_id, product_id, logo, logo_second, custom_logo, logoData, logo_type, custom_logo_type));
-    }
+    promises.push(generateImageWithLogos(backgroundUrl, user_id, product_id, logo, logo_second, custom_logo, logoData, logo_type, custom_logo_type));
 
     if (galleries && galleries.length !== 0) {
         const galleriesConvert = convertGallery(galleries);
@@ -546,7 +543,6 @@ function getItemData(settings) {
     let product_id = settings.product_id;
     let custom_logo_type = settings.custom_logo_type;
     let galleries = settings.galleries;
-    let is_first = settings?.is_first;
     // let custom_logo = undefined;
 
     if (logo_second && !isValidUrl(logo_second)) {
@@ -554,7 +550,7 @@ function getItemData(settings) {
         logo_second = undefined; // or set to a default value
     }
 
-    const task = { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries, is_first };
+    const task = { backgroundUrl, logo, logo_second, custom_logo, user_id, product_id, logoData, logo_type, custom_logo_type, galleries };
 
     // console.log(task);
 
